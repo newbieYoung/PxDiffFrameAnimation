@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>像素差逐帧动画工具</title>
+	<script type="text/javascript" src="./node_modules/doublylinkedlist/index.js"></script>
+	<style type="text/css">
+		body{
+			margin:0;
+			padding: 0;
+        }
+        #next,#reset,#reset-check{
+        	display:inline-block;
+        	width:30%;
+        }
+        textarea,input[readonly]{
+        	background-color:gray;
+        	border:0;
+        }
+        input[type=button]{
+        	margin:10px;
+        }
+    </style>
+</head>
+<body>
+	<div id="params">
+		颜色误差值:<input type="text" name="pxDiff" value="30"><br/>
+		截取最小长度:<input type="text" name="minLen" value="720"><br/>
+		此次计算的无损还原图填充255后的长度:<input type="text" name="resetDataLength"><br/>
+		位置信息:<textarea name="position" readonly="true"></textarea><br/>
+		位置信息数组长度:<input type="text" name="positionLen" readonly="true"><br/>
+		像素差图片高度:<input type="text" name="height" readonly="true"><br/>
+		前后帧相同颜色值数量:<input type="text" name="sameNum" readonly="true"><br/>
+		存在数据丢失颜色值数量:<input type="text" name="diffNum" readonly="true">(使用putImageData显示像素数据然后再使用getImageData获取像素数据会发现前后像素数据有丢失)<br/>
+		填充255alpha值后的像素差数据长度:<input type="text" name="fillLength" readonly="true"><br/>
+		无损还原图数据丢失位数:<input type="text" name="errorNum" readonly="true"><br/>
+		<input type="button" name="compute" value="计算像素差并查看还原效果">
+	</div>
+	<div id="last"></div>
+	<div>
+		<div id="next"></div>
+		<div id="reset"></div>
+		<div id="reset-check"></div>
+	</div>
+	<div id="diff"></div>
+	<div id="resetData"></div>
+	<script type="text/javascript">
+		'use strict';
+		//请输入逐帧动画中图片的宽度和高度（约定逐帧动画中每一帧图片的宽度和高度一样）
+		let width = 640;
+		let height = 1136;
+		//请输入上一帧的相关信息
+		let last = {
+			src:'./images/fututhreeyear/14-reset.png',
+			isReset:true,
+			width:933,
+			height:1039,
+			lastResetDataLength:3877548
+		};
+		//请输入下一帧的相关信息
+		let next = {
+			src:'./images/three/15.png',
+		};
+		//加载图片
+		let lastImg = new Image();
+		lastImg.src = last.src;
+		lastImg.onload = function(){
+			last.img = this;
+		};
+		lastImg.onerror = function(){
+			console.log('前一帧图片路径为:('+last.src+')加载失败！');
+		};
+		let nextImg = new Image();
+		nextImg.src = next.src;
+		nextImg.onload = function(){
+			next.img = this;
+		};
+		nextImg.onerror = function(){
+			console.log('后一帧图片路径为:('+next.src+')加载失败！');
+		}
+		//页面元素
+		let paramsDiv = document.querySelector('#params');
+		let pxDiffInput = document.querySelector('#params input[name=pxDiff]');
+		let minLenInput = document.querySelector('#params input[name=minLen]');
+		let computeButton = document.querySelector('#params input[name=compute]');
+		let positionTextArea = document.querySelector('#params textarea[name=position]');
+		let positionLenInput = document.querySelector('#params input[name=positionLen]');
+		let heightInput = document.querySelector('#params input[name=height]');
+		let sameNumInput = document.querySelector('#params input[name=sameNum]');
+		let diffNumInput = document.querySelector('#params input[name=diffNum]');
+		let fillLengthInput = document.querySelector('#params input[name=fillLength]');
+		let lastDiv = document.querySelector('#last');
+		let nextDiv = document.querySelector('#next');
+		let resetCheckDiv = document.querySelector('#reset-check');
+		let diffDiv = document.querySelector('#diff');
+		let resetDiv = document.querySelector('#reset');
+		let resetDataDiv = document.querySelector('#resetData');
+		let resetDataLengthInput = document.querySelector('#params input[name=resetDataLength]');
+		let errorNumInput = document.querySelector('#params input[name=errorNum]');
+		//不断轮询前后帧图片是否加载完毕
+		let num = 0;
+		let interval = setInterval(function(){
+			if((last.img&&next.img)||num>=5){
+				if(interval){
+					clearInterval(interval);
+				}
+				if(num>=5&&(!last.img||!next.img)){
+					console.log('达到轮询最大次数但是图片依然没有完全加载完成！');
+				}else{
+					if(!last.isReset){
+						last.canvas = document.createElement('canvas');
+						last.canvas.width = width;
+						last.canvas.height = height;
+						last.context = last.canvas.getContext('2d');
+						last.context.drawImage(last.img, 0, 0, width, height);
+						last.imageData = last.context.getImageData(0, 0, width, height);
+					}else{
+						last.tempCanvas = document.createElement('canvas');
+						last.tempCanvas.width = last.width;
+						last.tempCanvas.height = last.height;
+						last.tempContext = last.tempCanvas.getContext('2d');
+						last.tempContext.drawImage(last.img, 0, 0, last.width, last.height);
+						last.tempImageData = last.tempContext.getImageData(0, 0, last.width,last.height);
+						last.tempList = new DoublyLinkedList();
+						for(let i=0;i<last.tempImageData.data.length;i++){
+							last.tempList.push(last.tempImageData.data[i]);
+						}
+						last.no = 0;
+						last.index = 0;
+						last.node = last.tempList.getHead();
+						while(last.index<last.lastResetDataLength-1){
+							last.no++;
+							last.index++;
+							last.node = last.node.next;
+							if(last.no%3===0){
+								let next = last.node.next;
+								last.node.previous.next = last.node.next;
+								if(next){
+									last.node.next.previous = last.node.previous;
+								}
+								last.node.previous = null;
+								last.node.next = null;
+								last.index++;
+								last.tempList.length--;
+								last.node = next;
+							}	
+						}
+						last.canvas = document.createElement('canvas');
+						last.canvas.width = width;
+						last.canvas.height = height;
+						last.context = last.canvas.getContext('2d');
+						last.context.drawImage(last.img, 0, 0, width, height);
+						last.imageData = last.context.getImageData(0, 0, width, height);
+						last.no = 0;
+						last.node = last.tempList.getHead();
+						while(last.no<last.imageData.data.length){
+							last.imageData.data[last.no] = last.node.value;
+							last.no++;
+							last.node = last.node.next;
+						}
+						last.context.putImageData(last.imageData, 0, 0, 0, 0, width, height);
+					}
+					lastDiv.appendChild(last.canvas);
+					next.canvas = document.createElement('canvas');
+					next.canvas.width = width;
+					next.canvas.height = height;
+					next.context = next.canvas.getContext('2d');
+					next.context.drawImage(next.img,0,0,width,height);
+					next.imageData = next.context.getImageData(0,0,width,height);
+					nextDiv.appendChild(next.canvas);
+					getDiffAndReset();
+					computeButton.addEventListener('click',function(){
+						getDiffAndReset();
+					});
+				}
+			}
+			num++;
+		},1000);
+		//计算像素差并查看还原效果
+		function getDiffAndReset(){
+			let pxDiff = parseFloat(pxDiffInput.value);
+			let minLen = parseFloat(minLenInput.value);
+			let sameNum = 0;
+			if(pxDiff>=0&&minLen){
+				//计算像素差
+				let pxArray = new Array(last.imageData.data.length);
+				let lastData = last.imageData.data;
+				let nextData = next.imageData.data;
+				for(let i=0;i<pxArray.length;i++){
+					/**
+					 * 前一帧有值但是后一帧变为0，如果还是记录后一帧的0，由于存在未剔除的无效
+					 * 位，Canvas会默认赋值为0，那么有效位的0就会和无效位的0混淆，导致还原时
+					 * 无法区分，发生还原异常的情况；为了解决这个问题，这里记录前一帧的值，后
+					 * 边还原时只要遇到像素差数组中的值和前一帧的值相等，那么就说明这里应该是
+					 * 0
+					 * 另外之所以后一帧为0时忽略颜色值误差是因为颜色变浅肉眼很难看出来，但是颜色消失相对容易用肉眼看出来
+					 */
+					if(nextData[i]===0&&lastData[i]!==nextData[i]){
+						pxArray[i] = lastData[i];
+					}else if(Math.abs(lastData[i] - nextData[i])>pxDiff){
+						pxArray[i] = nextData[i];
+					}
+					if(Math.abs(lastData[i] - nextData[i])<=pxDiff&&nextData[i]!==0){
+						sameNum++;
+					}
+				}
+				sameNumInput.value = sameNum;
+				//计算位置信息
+				let final = new DoublyLinkedList();
+	            for (let i = 0; i < pxArray.length; i++) {
+	                final.push(pxArray[i]);
+	            }
+	            let initLength = final.size();
+	            let index = 0;
+	            let no = 0;
+	            let start = 0;
+	            let space = 0;
+	            let diff = [];
+	            while (index < initLength) {
+	                if (final.get(no,true).value == null) {
+	                    if (space === 0) {
+	                        start = no;
+	                    }
+	                    space++;
+	                    no++;
+	                } else {
+	                    if (space >= minLen) {
+	                        diff.push([start, space]);
+	                    	for(let i=0;i<space;i++){
+	                        	final.del(start,true);
+	                        }
+	                        space = 0;
+	                        no = start + 1; //截取后当前移动到start位，但是由于当前已经判断过了，所以从下一位开始
+	                    } else {
+	                        space = 0;
+	                        no++;
+	                    }
+	                }
+	                index++;
+	                if (index === initLength) {
+	                    diff.push([start, space]);
+	                    for(let i=0;i<space;i++){
+	                    	final.del(start,true);
+	                    }
+	                    space = 0;
+	                    no = start;
+	                }
+	            }
+	            //由于浏览器的canvas实现存在数据丢失的问题，所以这里需要重新插入alpha值让其等于255
+	            no = 0;
+	           	let node = final.getHead();
+	           	while(node){
+	           		node = node.next;
+	           		no++;
+	           		if(no%3===0&&node){
+	           			let temp = {
+					        value: 255,
+					        previous: null,
+					        next: null
+					    };
+					    temp.previous = node.previous;
+					    node.previous.next = temp;
+					    temp.next = node;
+					    node.previous = temp;
+					    final.length++;
+	           		}
+	           	}
+	           	if(final.size()%4!==0){
+	           		let overNum = 4-final.size()%4;
+	           		for(let i=0;i<overNum-1;i++){
+	           			final.push(null);
+	           		}
+	           		final.push(255);
+	           	}
+	           	let fillLength = final.size();
+	           	fillLengthInput.value = fillLength;
+	           	//输出数据
+	            let num3 = final.size();
+	            if (num3 / 4 !== Math.floor(num3 / 4)) {
+	                num3 = (Math.floor(num3 / 4) + 1) * 4;
+	            }
+	            let num1 = width;//像素差png宽度为原图宽度
+	            let num2 = Math.floor(num3 / 4 / num1) + 1;
+	            diff.push([final.size(), num1 * num2 * 4 - final.size()]);
+	            for(let i=final.size();i<num1*num2*4;i++){
+	                final.push(null);
+	            }
+	            positionTextArea.innerHTML = diff;
+	            positionLenInput.value = diff.length;
+	            let diffCanvas = document.querySelector('#diff canvas');
+	            if(!diffCanvas){
+	            	diffCanvas = document.createElement('canvas');
+	            }
+	            diffCanvas.width = num1;
+	            diffCanvas.height = num2;
+	            heightInput.value = num2;
+	            diffDiv.appendChild(diffCanvas);
+	            let diffContext = diffCanvas.getContext('2d');
+	            let diffImageData = diffContext.getImageData(0, 0, num1, num2);
+	            for (let i = 0; i < num3; i++) { //忽略补位数据
+	                diffImageData.data[i] = final.get(i,true).value;
+	            }
+	            diffContext.putImageData(diffImageData, 0, 0, 0, 0, num1, num2);
+	            //检查canvas是否有数据丢失
+	            let diffNum = 0;
+	            let diffImageDataNext = diffContext.getImageData(0, 0, num1, num2);
+	            for(let i=0;i<diffImageDataNext.data.length;i++){
+	            	if(diffImageData.data[i]!==diffImageDataNext.data[i]){
+	            		diffNum++;
+	            	}
+	            }
+	            diffNumInput.value = diffNum;
+	            //还原
+	           	let dataList = new DoublyLinkedList();
+				for(let i=0;i<diffImageData.data.length;i++){
+					dataList.push(diffImageData.data[i]);
+				}
+				//去除掉新增的所有255alpha值
+				no = 0;
+				index = 0;
+				node = dataList.getHead();
+				while(index<fillLength-1){
+					no++;
+					index++;
+					node = node.next;
+					if(no%3===0){
+						let next = node.next;
+						node.previous.next = node.next;
+						node.next.previous = node.previous;
+						node.previous = null;
+						node.next = null;
+						index++;
+						dataList.length--;
+						node = next;
+					}
+				}
+				//填补去掉的空白
+				for(let i=diff.length-2;i>=0;i--){
+					let start = diff[i][0];
+					let space = diff[i][1];
+					dataList.insert(start,new Array(space),true);
+				}
+				let tempCanvas = document.createElement('canvas');//复制前一帧像素数据
+				tempCanvas.width = width;
+				tempCanvas.height = height;
+				let tempContext = tempCanvas.getContext('2d');
+				let tempImageData = tempContext.getImageData(0,0,width,height);
+				for(let i=0;i<lastData.length;i++){
+					tempImageData.data[i] = lastData[i];
+				}
+				node = dataList.getHead();
+				no = 0;
+				while(node.next){
+					if(node.value&&!(node.value instanceof Array)){
+						if(tempImageData.data[no]===node.value){
+							tempImageData.data[no] = 0;
+						}else{
+							tempImageData.data[no] = node.value;
+						}
+					}
+					if(node.value instanceof Array){
+						no+= node.value.length;
+					}else{
+						no++;
+					}
+					node = node.next;
+				}
+				let resetCanvas = document.querySelector('#reset canvas');
+				if(!resetCanvas){
+					resetCanvas = document.createElement('canvas');
+					resetCanvas.width = width;
+					resetCanvas.height = height;
+				}
+				let resetContext = resetCanvas.getContext('2d');
+				resetContext.clearRect(0, 0, width, height);
+				resetContext.putImageData(tempImageData, 0, 0, 0, 0, width, height);
+				resetDiv.appendChild(resetCanvas);
+				//无损保存此次还原图，以便充当一下计算的前帧
+				let resetData = new DoublyLinkedList();
+				for(let i=0;i<tempImageData.data.length;i++){
+					resetData.push(tempImageData.data[i]);
+				}
+				let resetDataNo = 0;
+	           	let resetDataNode = resetData.getHead();
+	           	while(resetDataNode.next){
+	           		resetDataNode = resetDataNode.next;
+	           		resetDataNo++;
+	           		if(resetDataNo%3===0){
+	           			let temp = {
+					        value: 255,
+					        previous: null,
+					        next: null
+					    };
+					    temp.previous = resetDataNode.previous;
+					    resetDataNode.previous.next = temp;
+					    temp.next = resetDataNode;
+					    resetDataNode.previous = temp;
+					    resetData.length++;
+	           		}
+	           	}
+	           	if(resetData.size()%4!==0){
+	           		let overNum = 4-resetData.size()%4;
+	           		for(let i=0;i<overNum-1;i++){
+	           			resetData.push(null);
+	           		}
+	           		resetData.push(255);
+	           	}
+	           	resetDataLengthInput.value = resetData.length;
+				let resetDataWidth = Math.floor(Math.sqrt(resetData.length/4));
+				let resetDataHeight;
+				for(let i=resetDataWidth;i>=1;i--){
+					resetDataHeight = resetData.length/4.0/i;
+					if(resetDataHeight===Math.floor(resetDataHeight)){
+						resetDataWidth = i;
+						break;
+					}
+				}
+				let tempResetDataCanvas = document.createElement('canvas');
+				tempResetDataCanvas.width = resetDataWidth;
+				tempResetDataCanvas.height = resetDataHeight;
+				let tempResetDataContext = tempResetDataCanvas.getContext('2d');
+				let tempResetDataImageData = tempResetDataContext.getImageData(0,0,resetDataWidth,resetDataHeight);
+				node = resetData.getHead();
+				no = 0;
+				tempResetDataImageData.data[0] = node.value;
+				while(node.next){
+					no++;
+					node = node.next;
+					tempResetDataImageData.data[no] = node.value;
+				}
+				let resetDataCanvas = document.querySelector('#resetData canvas');
+				if(!resetDataCanvas){
+					resetDataCanvas = document.createElement('canvas');
+					resetDataCanvas.width = resetDataWidth;
+					resetDataCanvas.height = resetDataHeight;
+				}
+				let resetDataContext = resetDataCanvas.getContext('2d');
+				resetDataContext.clearRect(0, 0, resetDataWidth, resetDataHeight);
+				resetDataContext.putImageData(tempResetDataImageData, 0, 0, 0, 0, resetDataWidth, resetDataHeight);
+				resetDataDiv.appendChild(resetDataCanvas);
+				//测试无损还原图是否存在数据丢失
+				let resetTest = new DoublyLinkedList();
+				for(let i=0;i<tempResetDataImageData.data.length;i++){
+					resetTest.push(tempResetDataImageData.data[i]);
+				}
+				no = 0;
+				index = 0;
+				node = resetTest.getHead();
+				while(index<resetDataLengthInput.value-1){
+					no++;
+					index++;
+					node = node.next;
+					if(no%3===0){
+						let next = node.next;
+						node.previous.next = node.next;
+						if(next){
+							node.next.previous = node.previous;
+						}
+						node.previous = null;
+						node.next = null;
+						index++;
+						resetTest.length--;
+						node = next;
+					}	
+				}
+				let resetCheckCanvas = document.createElement('canvas');
+				resetCheckCanvas.width = width;
+				resetCheckCanvas.height = height;
+				let resetCheckContext = resetCheckCanvas.getContext('2d');
+				let resetCheckImage = resetCheckContext.getImageData(0,0,width,height);
+				node = resetTest.getHead();
+				no = 0;
+				let resetErrorNum = 0;
+				while(node.next){
+					if(tempImageData.data[no]!==node.value){
+						resetErrorNum++;
+					}
+					resetCheckImage.data[no] = node.value;
+					no++;
+					node = node.next;
+				}
+				resetCheckContext.putImageData(resetCheckImage, 0, 0, 0, 0, width, height)
+				resetCheckDiv.appendChild(resetCheckCanvas);//从显示结果判断
+				errorNumInput.value = resetErrorNum;//从计算结果判断
+			}else{
+				console.log('请输入误差值以及最小取值长度');
+			}
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>测试DoublyLinkedList处理像素差数据（删除操作）时是否得到了优化</title>
+	<script type="text/javascript" src="../index.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		/* 测试DoublyLinkedList的memory查找特性和del */
+		var demo0 = new DoublyLinkedList();
+		demo0.push(0);
+		demo0.push(1);
+		demo0.push(2);
+		demo0.push(3);
+		demo0.push(4);
+		demo0.push(5);
+		demo0.push(6);
+		demo0.push(7);
+		demo0.push(8);
+		demo0.push(9);
+		//删除头节点
+		// for(var i=0;i<10;i++){
+		// 	demo0.del(0,true);
+		// }
+		//删除尾节点
+		for(var i=0;i<10;i++){
+			demo0.del(9-i,true);
+		}
+		//删除中间某个节点
+		// for(var i=0;i<10;i++){
+		// 	demo0.del(4,true);
+		// }
+		console.log(demo0);
+	</script>
+</body>
+</html>

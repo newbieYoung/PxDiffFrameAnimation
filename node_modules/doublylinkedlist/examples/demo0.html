@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>测试DoublyLinkedList</title>
+	<script type="text/javascript" src="../index.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		var demo0 = new DoublyLinkedList();
+		//测试push
+		demo0.push(1);
+		demo0.push(2);
+		demo0.push(3);
+		demo0.push(4);
+		//测试get
+		console.log(demo0.get(0));
+		console.log(demo0.get(1));
+		console.log(demo0.get(2));
+		console.log(demo0.get(3));
+		console.log(demo0.get(0,true));
+		console.log(demo0.get(1,true));
+		console.log(demo0.get(2,true));
+		console.log(demo0.get(3,true));
+		//测试getHead和getEnd
+		console.log(demo0.getHead());
+		console.log(demo0.getEnd());
+
+		//空测试
+		var demo1 = new DoublyLinkedList();
+		console.log(demo1.get(0));
+		console.log(demo1.get(1));
+		console.log(demo1.get(2));
+		console.log(demo1.get(3));
+		console.log(demo1.get(0,true));
+		console.log(demo1.get(1,true));
+		console.log(demo1.get(2,true));
+		console.log(demo1.get(3,true));
+		console.log(demo1.getHead());
+		console.log(demo1.getEnd());
+	</script>
+</body>
+</html>

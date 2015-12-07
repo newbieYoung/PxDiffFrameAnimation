@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>富途三周年动画</title>
+	<script type="text/javascript" src="../js/fututhreeyear-data.js"></script>
+	<style type="text/css">
+	body{
+		background-color:rgb(222,222,222);
+	}
+	canvas{
+		position:absolute;
+		height:100%;
+	}
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		//常量
+		var body = document.querySelector('body');
+		var width = 640;
+		var height = 1136;
+		var totalImageData = [];//总像素数据
+		var interval;
+		//动画canvas
+		var canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		var context = canvas.getContext('2d');
+		//图片
+		var img = new Image();
+		img.src = '../images/fututhreeyear/final.png';
+		img.onload = function(){
+			context.drawImage(img,0,2272,width,height,0,0,width,height);
+			var initImageData = context.getImageData(0, 0, width, height);
+			getFrame(7,initImageData,img,3408,position,fillLength,9);
+		};
+		/**
+		 * 还原帧像素数据
+		 * @param  {[type]} startNo       [还原帧中第一帧序号]
+		 * @param  {[type]} initImageData [启始帧像素数据]
+		 * @param  {[type]} img           [原图]
+		 * @param  {[type]} lheight       [原图启始纵坐标（合并精灵图是纵向排列的）]
+		 * @param  {[type]} position      [还原帧位置差数据]
+		 * @param  {[type]} fillLength    [填充255alpha值后的像素差数据长度]
+		 * @param  {[type]} length        [还原帧数量]
+		 */
+		function getFrame(startNo,initImageData,img,lheight,position,fillLength,length){
+			var imageData = [];//用于存储还原之后的像素差
+			var data = [];
+		 	for(var i=0;i<length;i++){
+		 		var init = document.createElement('canvas');
+		 		init.width = width;
+		 		init.height = height;
+		 		var initContext = init.getContext('2d');
+		 		imageData.push(initContext.getImageData(0, 0, width, height));
+		 		var no = startNo+i;
+		   		var temp = document.createElement('canvas');
+				temp.width = width;
+				temp.height = diffHeight[no];
+				var tempContext = temp.getContext('2d');
+				if(diffHeight[no-1]){
+					lheight += diffHeight[no-1];
+				}
+				tempContext.drawImage(img,0,lheight,width,diffHeight[no],0,0,width,diffHeight[no]);
+				data.push(tempContext.getImageData(0, 0, temp.width, temp.height).data);
+		   	}
+		   	var worker = new Worker('../js/fututhreeyear-compute.js');
+			var workerData = {
+				imageData:imageData,
+				startNo:startNo,
+				data:data,
+				position:position,
+				fillLength:fillLength,
+				length:length,
+				initImageData:initImageData
+			};
+			worker.postMessage(workerData);
+			worker.onmessage = function(e){
+				var startNo = e.data.startNo;
+				var imageData = e.data.imageData;
+				for(var i=0;i<imageData.length;i++){
+					totalImageData[startNo+i] = imageData[i];
+				}
+				var num = 0;
+				for(var i=0;i<totalImageData.length;i++){
+					if(totalImageData[i]){
+						num++;
+					}
+				}
+				if(num===9){
+					animate(startNo);
+				}
+				this.terminate();
+			};
+		}
+		function animate(startNo){
+			context.clearRect(0, 0, width, height);
+			body.appendChild(canvas);
+			setTimeout(function(){
+				context.clearRect(0, 0, width, height);
+				context.drawImage(img,0,1136,width,height,0,0,width,height);
+			},150);
+			setTimeout(function(){
+				context.clearRect(0, 0, width, height);
+				context.drawImage(img,0,1136,width,height,0,0,width,height);
+			},300);
+			setTimeout(function(){
+				context.clearRect(0, 0, width, height);
+				context.drawImage(img,0,2272,width,height,0,0,width,height);
+			},450);
+			for(var i=startNo;i<totalImageData.length;i++){
+				(function(index){
+					setTimeout(function(){
+						context.clearRect(0, 0, width, height);
+						context.putImageData(totalImageData[index], 0, 0, 0, 0, width, height);
+					},(index-3)*150);
+				})(i);
+			}
+		}
+	</script>
+</body>
+</html>
