@@ -8,6 +8,7 @@
 		body{
 			margin:0;
 			padding: 0;
+			background-color:rgb(222,222,222);
         }
         #next,#reset,#reset-check{
         	display:inline-block;
@@ -51,15 +52,15 @@
 		let height = 1136;
 		//请输入上一帧的相关信息
 		let last = {
-			src:'./images/fututhreeyear/14-reset.png',
-			isReset:true,
+			src:'./images/fututhreeyear/three-24-reset.png',
+			isReset:true,//是否使用上次计算的无损还原图
 			width:933,
 			height:1039,
 			lastResetDataLength:3877548
 		};
 		//请输入下一帧的相关信息
 		let next = {
-			src:'./images/three/15.png',
+			src:'./images/three/25.png',
 		};
 		//加载图片
 		let lastImg = new Image();
@@ -463,9 +464,12 @@
 						node = next;
 					}	
 				}
-				let resetCheckCanvas = document.createElement('canvas');
-				resetCheckCanvas.width = width;
-				resetCheckCanvas.height = height;
+				let resetCheckCanvas = document.querySelector('#reset-check canvas');
+				if(!resetCheckCanvas){
+					resetCheckCanvas = document.createElement('canvas');
+					resetCheckCanvas.width = width;
+					resetCheckCanvas.height = height;
+				}
 				let resetCheckContext = resetCheckCanvas.getContext('2d');
 				let resetCheckImage = resetCheckContext.getImageData(0,0,width,height);
 				node = resetTest.getHead();
@@ -479,6 +483,7 @@
 					no++;
 					node = node.next;
 				}
+				resetCheckContext.clearRect(0,0,width,height);
 				resetCheckContext.putImageData(resetCheckImage, 0, 0, 0, 0, width, height)
 				resetCheckDiv.appendChild(resetCheckCanvas);//从显示结果判断
 				errorNumInput.value = resetErrorNum;//从计算结果判断

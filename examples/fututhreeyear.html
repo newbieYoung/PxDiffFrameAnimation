@@ -29,11 +29,11 @@
 		var context = canvas.getContext('2d');
 		//图片
 		var img = new Image();
-		img.src = '../images/fututhreeyear/final.png';
+		img.src = '../images/fututhreeyear/three-final.png';
 		img.onload = function(){
-			context.drawImage(img,0,2272,width,height,0,0,width,height);
 			var initImageData = context.getImageData(0, 0, width, height);
-			getFrame(7,initImageData,img,3408,position,fillLength,9);
+			console.log(new Date().getTime());
+			getFrame(2,initImageData,img,0,threePosition,threeDiffHeight,threeFillLength,24);
 		};
 		/**
 		 * 还原帧像素数据
@@ -42,10 +42,11 @@
 		 * @param  {[type]} img           [原图]
 		 * @param  {[type]} lheight       [原图启始纵坐标（合并精灵图是纵向排列的）]
 		 * @param  {[type]} position      [还原帧位置差数据]
+		 * @param  {[type]} diffHeight    [像素差图片的高度]
 		 * @param  {[type]} fillLength    [填充255alpha值后的像素差数据长度]
 		 * @param  {[type]} length        [还原帧数量]
 		 */
-		function getFrame(startNo,initImageData,img,lheight,position,fillLength,length){
+		function getFrame(startNo,initImageData,img,lheight,position,diffHeight,fillLength,length){
 			var imageData = [];//用于存储还原之后的像素差
 			var data = [];
 		 	for(var i=0;i<length;i++){
@@ -88,33 +89,22 @@
 						num++;
 					}
 				}
-				if(num===9){
+				if(num===24){
 					animate(startNo);
 				}
 				this.terminate();
 			};
 		}
 		function animate(startNo){
+			console.log(new Date().getTime());
 			context.clearRect(0, 0, width, height);
 			body.appendChild(canvas);
-			setTimeout(function(){
-				context.clearRect(0, 0, width, height);
-				context.drawImage(img,0,1136,width,height,0,0,width,height);
-			},150);
-			setTimeout(function(){
-				context.clearRect(0, 0, width, height);
-				context.drawImage(img,0,1136,width,height,0,0,width,height);
-			},300);
-			setTimeout(function(){
-				context.clearRect(0, 0, width, height);
-				context.drawImage(img,0,2272,width,height,0,0,width,height);
-			},450);
 			for(var i=startNo;i<totalImageData.length;i++){
 				(function(index){
 					setTimeout(function(){
 						context.clearRect(0, 0, width, height);
 						context.putImageData(totalImageData[index], 0, 0, 0, 0, width, height);
-					},(index-3)*150);
+					},(index-2)*100);
 				})(i);
 			}
 		}
