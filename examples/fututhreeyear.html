@@ -29,11 +29,11 @@
 		var context = canvas.getContext('2d');
 		//图片
 		var img = new Image();
-		img.src = '../images/fututhreeyear/three-final.png';
+		img.src = '../images/fututhreeyear/year-final.png';
 		img.onload = function(){
 			var initImageData = context.getImageData(0, 0, width, height);
 			console.log(new Date().getTime());
-			getFrame(2,initImageData,img,0,threePosition,threeDiffHeight,threeFillLength,24);
+			getFrame(2,initImageData,img,0,yearPosition,yearDiffHeight,yearFillLength,3);
 		};
 		/**
 		 * 还原帧像素数据
@@ -89,7 +89,7 @@
 						num++;
 					}
 				}
-				if(num===24){
+				if(num===3){
 					animate(startNo);
 				}
 				this.terminate();
