@@ -52,15 +52,15 @@
 		let height = 1136;
 		//请输入上一帧的相关信息
 		let last = {
-			src:'./images/fututhreeyear/year-7-reset.png',
-			isReset:true,//是否使用上次计算的无损还原图
+			src:'./images/year/1.png',
+			isReset:false,//是否使用上次计算的无损还原图
 			width:933,
 			height:1039,
 			lastResetDataLength:3877548
 		};
 		//请输入下一帧的相关信息
 		let next = {
-			src:'./images/year/8.png',
+			src:'./images/year/2.png',
 		};
 		//加载图片
 		let lastImg = new Image();
@@ -144,7 +144,7 @@
 								last.index++;
 								last.tempList.length--;
 								last.node = next;
-							}	
+							}
 						}
 						last.canvas = document.createElement('canvas');
 						last.canvas.width = width;
@@ -462,7 +462,7 @@
 						index++;
 						resetTest.length--;
 						node = next;
-					}	
+					}
 				}
 				let resetCheckCanvas = document.querySelector('#reset-check canvas');
 				if(!resetCheckCanvas){
