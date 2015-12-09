@@ -12,31 +12,48 @@
 		position:absolute;
 		height:100%;
 	}
+	#yearCanvas{
+		z-index:2;
+	}
+	#threeCanvas{
+		z-index:1;
+	}
 	</style>
 </head>
 <body>
+	<canvas id="yearCanvas" width="640" height="1136"></canvas>
+	<canvas id="threeCanvas" width="640" height="1136"></canvas>
 	<script type="text/javascript">
 		//常量
 		var body = document.querySelector('body');
 		var width = 640;
 		var height = 1136;
-		var totalImageData = [];//总像素数据
-		var interval;
-		//动画canvas
-		var canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		var context = canvas.getContext('2d');
+		var yearTotalImageData = [];//year动画总像素数据
+		var yearNum = 0;
+		var threeTotalImageData = [];//three动画总像素差数据
+		var threeNum = 0;
+		//year动画canvas
+		var yearCanvas = document.querySelector('#yearCanvas');
+		var yearContext = yearCanvas.getContext('2d');
+		//three动画canvas
+		var threeCanvas = document.querySelector('#threeCanvas');
+		var threeContext = threeCanvas.getContext('2d');
 		//图片
-		var img = new Image();
-		img.src = '../images/fututhreeyear/year-final.png';
-		img.onload = function(){
-			var initImageData = context.getImageData(0, 0, width, height);
-			console.log(new Date().getTime());
-			getFrame(2,initImageData,img,0,yearPosition,yearDiffHeight,yearFillLength,8);
+		var yearImg = new Image();
+		yearImg.src = '../images/fututhreeyear/year-final.png';
+		yearImg.onload = function(){
+			var initImageData = yearContext.getImageData(0, 0, width, height);
+			getFrame('year',2,initImageData,yearImg,0,yearPosition,yearDiffHeight,yearFillLength,8);
+		};
+		var threeImg = new Image();
+		threeImg.src = '../images/fututhreeyear/three-final.png';
+		threeImg.onload = function(){
+			var initImageData = threeContext.getImageData(0, 0, width, height);
+			getFrame('three',2,initImageData,threeImg,0,threePosition,threeDiffHeight,threeFillLength,24);
 		};
 		/**
 		 * 还原帧像素数据
+		 * @param  {[type]} name          [动画名称]
 		 * @param  {[type]} startNo       [还原帧中第一帧序号]
 		 * @param  {[type]} initImageData [启始帧像素数据]
 		 * @param  {[type]} img           [原图]
@@ -46,7 +63,7 @@
 		 * @param  {[type]} fillLength    [填充255alpha值后的像素差数据长度]
 		 * @param  {[type]} length        [还原帧数量]
 		 */
-		function getFrame(startNo,initImageData,img,lheight,position,diffHeight,fillLength,length){
+		function getFrame(name,startNo,initImageData,img,lheight,position,diffHeight,fillLength,length){
 			var imageData = [];//用于存储还原之后的像素差
 			var data = [];
 		 	for(var i=0;i<length;i++){
@@ -78,27 +95,42 @@
 			};
 			worker.postMessage(workerData);
 			worker.onmessage = function(e){
-				var startNo = e.data.startNo;
-				var imageData = e.data.imageData;
-				for(var i=0;i<imageData.length;i++){
-					totalImageData[startNo+i] = imageData[i];
-				}
-				var num = 0;
-				for(var i=0;i<totalImageData.length;i++){
-					if(totalImageData[i]){
-						num++;
+				if(name==='year'){
+					var startNo = e.data.startNo;
+					var imageData = e.data.imageData;
+					for(var i=0;i<imageData.length;i++){
+						yearTotalImageData[startNo+i] = imageData[i];
 					}
-				}
-				if(num===8){
-					animate(startNo);
+					for(var i=0;i<yearTotalImageData.length;i++){
+						if(yearTotalImageData[i]){
+							yearNum++;
+						}
+					}
+					if(yearNum===8&&threeNum===24){
+						animate(startNo,yearContext,yearTotalImageData);
+						animate(startNo,threeContext,threeTotalImageData);
+					}
+				}else if(name==='three'){
+					var startNo = e.data.startNo;
+					var imageData = e.data.imageData;
+					for(var i=0;i<imageData.length;i++){
+						threeTotalImageData[startNo+i] = imageData[i];
+					}
+					for(var i=0;i<threeTotalImageData.length;i++){
+						if(threeTotalImageData[i]){
+							threeNum++;
+						}
+					}
+					if(yearNum===8&&threeNum===24){
+						animate(startNo,threeContext,threeTotalImageData);
+						animate(startNo,yearContext,yearTotalImageData);
+					}
 				}
 				this.terminate();
 			};
 		}
-		function animate(startNo){
-			console.log(new Date().getTime());
+		function animate(startNo,context,totalImageData){
 			context.clearRect(0, 0, width, height);
-			body.appendChild(canvas);
 			for(var i=startNo;i<totalImageData.length;i++){
 				(function(index){
 					setTimeout(function(){
