@@ -33,7 +33,7 @@
 		img.onload = function(){
 			var initImageData = context.getImageData(0, 0, width, height);
 			console.log(new Date().getTime());
-			getFrame(2,initImageData,img,0,yearPosition,yearDiffHeight,yearFillLength,7);
+			getFrame(2,initImageData,img,0,yearPosition,yearDiffHeight,yearFillLength,8);
 		};
 		/**
 		 * 还原帧像素数据
@@ -89,7 +89,7 @@
 						num++;
 					}
 				}
-				if(num===7){
+				if(num===8){
 					animate(startNo);
 				}
 				this.terminate();
