@@ -51,7 +51,7 @@
 		threeImg.onload = function(){
 			console.log(new Date().getTime());
 			var initImageData = threeContext.getImageData(0, 0, width, height);
-			getFrame('three',2,initImageData,threeImg,0,threePosition,threeDiffHeight,threeFillLength,24);
+			getFrame('three',2,initImageData,threeImg,0,threePosition,threeDiffHeight,threeFillLength,36);
 		};
 		/**
 		 * 还原帧像素数据
@@ -108,7 +108,7 @@
 							yearNum++;
 						}
 					}
-					if(yearNum===31&&threeNum===24){
+					if(yearNum===31&&threeNum===36){
 						console.log(new Date().getTime());
 						animate(startNo,yearContext,yearTotalImageData);
 						animate(startNo,threeContext,threeTotalImageData);
@@ -124,7 +124,7 @@
 							threeNum++;
 						}
 					}
-					if(yearNum===31&&threeNum===24){
+					if(yearNum===31&&threeNum===36){
 						console.log(new Date().getTime());
 						animate(startNo,threeContext,threeTotalImageData);
 						animate(startNo,yearContext,yearTotalImageData);
