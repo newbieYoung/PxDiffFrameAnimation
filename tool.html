@@ -26,7 +26,7 @@
 <body>
 	<div id="params">
 		颜色误差值:<input type="text" name="pxDiff" value="20"><br/>
-		截取最小长度:<input type="text" name="minLen" value="360"><br/>
+		截取最小长度:<input type="text" name="minLen" value="720"><br/>
 		此次计算的无损还原图填充255后的长度:<input type="text" name="resetDataLength"><br/>
 		位置信息:<textarea name="position" readonly="true"></textarea><br/>
 		位置信息数组长度:<input type="text" name="positionLen" readonly="true"><br/>
@@ -52,7 +52,7 @@
 		let height = 1136;
 		//请输入上一帧的相关信息
 		let last = {
-			src:'./images/fututhreeyear/year-31-reset.png',
+			src:'./images/fututhreeyear/three-36-reset.png',
 			isReset:true,//是否使用上次计算的无损还原图
 			width:933,
 			height:1039,
@@ -60,7 +60,7 @@
 		};
 		//请输入下一帧的相关信息
 		let next = {
-			src:'./images/year/32.png',
+			src:'./images/three/37.png',
 		};
 		//加载图片
 		let lastImg = new Image();
