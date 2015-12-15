@@ -42,12 +42,14 @@
 		var yearImg = new Image();
 		yearImg.src = '../images/fututhreeyear/year-final.png';
 		yearImg.onload = function(){
+			console.log(new Date().getTime());
 			var initImageData = yearContext.getImageData(0, 0, width, height);
-			getFrame('year',2,initImageData,yearImg,0,yearPosition,yearDiffHeight,yearFillLength,8);
+			getFrame('year',2,initImageData,yearImg,0,yearPosition,yearDiffHeight,yearFillLength,31);
 		};
 		var threeImg = new Image();
 		threeImg.src = '../images/fututhreeyear/three-final.png';
 		threeImg.onload = function(){
+			console.log(new Date().getTime());
 			var initImageData = threeContext.getImageData(0, 0, width, height);
 			getFrame('three',2,initImageData,threeImg,0,threePosition,threeDiffHeight,threeFillLength,24);
 		};
@@ -106,7 +108,8 @@
 							yearNum++;
 						}
 					}
-					if(yearNum===8&&threeNum===24){
+					if(yearNum===31&&threeNum===24){
+						console.log(new Date().getTime());
 						animate(startNo,yearContext,yearTotalImageData);
 						animate(startNo,threeContext,threeTotalImageData);
 					}
@@ -121,7 +124,8 @@
 							threeNum++;
 						}
 					}
-					if(yearNum===8&&threeNum===24){
+					if(yearNum===31&&threeNum===24){
+						console.log(new Date().getTime());
 						animate(startNo,threeContext,threeTotalImageData);
 						animate(startNo,yearContext,yearTotalImageData);
 					}
