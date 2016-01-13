@@ -4,6 +4,13 @@
 
 Welcome to My [GitHub](https://github.com/newbieYoung)
 
+### HowToUse
+
++ run `npm install -g harp` command in your system.
++ run `npm install` command in the root path of this project.
++ run `harp server` command in the root path of this project.
++ visit url `http://localhost:9000/examples/fututhreeyear.html` to see the example or visit url `http://localhost:9000/tool.html` to use the tool.
+
 ### Overview
 
 + The file which is named 'tool.html' is a tool to get the data.
