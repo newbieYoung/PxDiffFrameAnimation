@@ -4,7 +4,7 @@
 
 Welcome to My [GitHub](https://github.com/newbieYoung)
 
-### HowToUse
+### How To Use
 
 + run `npm install -g harp` command in your system.
 + run `npm install` command in the root path of this project.
