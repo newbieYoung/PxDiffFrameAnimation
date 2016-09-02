@@ -28,6 +28,7 @@
 		var height = 564;
 		var canvas = document.querySelector('#screen');
 		var emptyImageData = canvas.getContext('2d').getImageData(0, 0, width, height);
+		var worker = new Worker('../js/futunnscreen-compute.js');
 		//初始化图片
 		var initLoaded = false;
 		var initImg = new Image();
@@ -42,66 +43,65 @@
 			var interval = setInterval(function(){
 				if(initLoaded){
 					clearInterval(interval);
-					var px = new PxAnimation(canvas,pxImage,initImg);
+					var px = new PxAnimation(canvas,pxImage,initImg,worker);
 					px.init();
 					px.animate();
 				}
 			},500);
 		};
 		//像素差动画
-		function PxAnimation(canvas,pxImg,initImg){
+		function PxAnimation(canvas,pxImg,initImg,worker){
 			this.index;//序号
 			this.canvas = canvas;//画布
 			this.pxImg = pxImg;
 			this.initImg = initImg;
+			this.worker = worker;
 			this.width;
 			this.height;
 			this.context;
 			this.imageData;//像素数据
 			this.startY;//从像素差图片中取数据时的y坐标
 			this.init = function(){//初始化
-				this.index = 1;
-				this.width = this.canvas.width;
-				this.height = this.canvas.height;
-				this.context = this.canvas.getContext('2d');
-				this.context.drawImage(this.initImg,0,0,this.width,this.height);
-				this.imageData = this.context.getImageData(0, 0, this.width, this.height);
-				this.startY = 0;
-			};
-			this.animate = function(){//开始动画
 				var self = this;
-				var temp = document.createElement('canvas');
-				temp.width = this.width;
-				temp.height = diffHeight[this.index];
-				var tempContext = temp.getContext('2d');
-				var lastY = diffHeight[this.index-1];
-				if(lastY!=null){
-					this.startY += lastY;
-				}
-				tempContext.drawImage(this.pxImg,0,this.startY,this.width,temp.height,0,0,this.width,temp.height);
-				var pxImageData = tempContext.getImageData(0, 0, temp.width, temp.height).data;
-
-				var worker = new Worker('../js/futunnscreen-compute.js');
-				var workerData = {
-					emptyImageData:emptyImageData,//空像素容器
-					imageData:this.imageData,//上一帧像素数据
-					pxImageData:pxImageData,//下一帧像素差数据
-					position:position[this.index],
-					fillLength:fillLength[this.index]
-				};
-				worker.postMessage(workerData);
-				worker.onmessage = function(e){
+				self.index = 1;
+				self.width = self.canvas.width;
+				self.height = self.canvas.height;
+				self.context = self.canvas.getContext('2d');
+				self.context.drawImage(self.initImg,0,0,self.width,self.height);
+				self.imageData = self.context.getImageData(0, 0, self.width, self.height);
+				self.startY = 0;
+				self.worker.onmessage = function(e){
 					var nextImageData = e.data;
 					self.context.clearRect(0, 0, self.width, self.height);
 					self.context.putImageData(nextImageData, 0, 0, 0, 0, self.width, self.height);
 					self.index++;
 					self.imageData = nextImageData;
-					this.terminate();
 					if(position[self.index]==null){
 						self.init();//重复
 					}
 					self.animate();//继续
 				};
+			};
+			this.animate = function(){//开始动画
+				var self = this;
+				var temp = document.createElement('canvas');
+				temp.width = self.width;
+				temp.height = diffHeight[self.index];
+				var tempContext = temp.getContext('2d');
+				var lastY = diffHeight[self.index-1];
+				if(lastY!=null){
+					self.startY += lastY;
+				}
+				tempContext.drawImage(self.pxImg,0,self.startY,self.width,temp.height,0,0,self.width,temp.height);
+				var pxImageData = tempContext.getImageData(0, 0, temp.width, temp.height).data;
+				var workerData = {
+					emptyImageData:emptyImageData,//空像素容器
+					imageData:self.imageData,//上一帧像素数据
+					pxImageData:pxImageData,//下一帧像素差数据
+					position:position[self.index],
+					fillLength:fillLength[self.index]
+				};
+				self.worker.postMessage(workerData);
 			}
 		}
 	</script>
