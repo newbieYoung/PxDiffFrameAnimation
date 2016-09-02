@@ -3,13 +3,13 @@
 <head>
 	<meta charset="UTF-8">
 	<title>富途牛牛演示操作</title>
-	<script type="text/javascript" src="../js/futunnscreen-data.js"></script>
+	<script type="text/javascript" src="../js/macnnscreen-data.js"></script>
 	<style type="text/css">
 		body{
 			background-color:black;
 		}
 		.container{
-			width:1000px;
+			width:895px;
 			height:564px;
 			background-color:white;
 		}
@@ -21,10 +21,10 @@
 </head>
 <body>
 	<div class="container">
-		<canvas id="screen" class="screen" width="1000" height="564"></canvas>
+		<canvas id="screen" class="screen" width="895" height="564"></canvas>
 	</div>
 	<script type="text/javascript">
-		var width = 1000;
+		var width = 895;
 		var height = 564;
 		var canvas = document.querySelector('#screen');
 		var emptyImageData = canvas.getContext('2d').getImageData(0, 0, width, height);
@@ -32,13 +32,13 @@
 		//初始化图片
 		var initLoaded = false;
 		var initImg = new Image();
-		initImg.src = '../images/futunnscreen/init.png';
+		initImg.src = '../images/macnnscreen/mac-init.png';
 		initImg.onload = function(){
 			initLoaded = true;
 		};
 		//像素差图片
 		var pxImage = new Image();
-		pxImage.src = '../images/futunnscreen/screen-final.png';
+		pxImage.src = '../images/macnnscreen/mac-final.png';
 		pxImage.onload = function(){
 			var interval = setInterval(function(){
 				if(initLoaded){
