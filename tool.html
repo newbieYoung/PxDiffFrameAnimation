@@ -14,6 +14,9 @@
         	display:inline-block;
         	width:30%;
         }
+        #diff{
+        	cursor:pointer;
+        }
         textarea,input[readonly]{
         	background-color:gray;
         	border:0;
@@ -25,8 +28,8 @@
 </head>
 <body>
 	<div id="params">
-		颜色误差值:<input type="text" name="pxDiff" value="10"><br/>
-		截取最小长度:<input type="text" name="minLen" value="720"><br/>
+		颜色误差值:<input type="text" name="pxDiff" value="50"><br/>
+		截取最小长度:<input type="text" name="minLen" value="100"><br/>
 		此次计算的无损还原图填充255后的长度:<input type="text" name="resetDataLength"><br/>
 		位置信息:<textarea name="position" readonly="true"></textarea><br/>
 		位置信息数组长度:<input type="text" name="positionLen" readonly="true"><br/>
