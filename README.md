@@ -9,7 +9,7 @@ Welcome to My [GitHub](https://github.com/newbieYoung)
 + run `npm install -g harp` command in your system.
 + run `npm install` command in the root path of this project.
 + run `harp server` command in the root path of this project.
-+ visit url `http://localhost:9000/examples/fututhreeyear.html` to see the example or visit url `http://localhost:9000/tool.html` to use the tool.
++ visit urls to see the example or visit url `http://localhost:9000/tool.html` to use the tool.
 
 ### Overview
 
@@ -17,12 +17,3 @@ Welcome to My [GitHub](https://github.com/newbieYoung)
 + The catalog which is named `examples` contains many frame animations developed by this technology.
 + The catalog which is named `images` contains many images which are used in the examples.
 + The catalog which is named `js` contains many javascript codes.
-
-### Examples
-
-+ [fututhreeyears](http://newbieyoung.github.io/examples/fututhreeyear.html)
-
-> The url is to test PxDiffFrameAnimation.Sometimes if you spent a lot of time to visit the link maybe there is a problem when the client loads images.Please refresh your web application if you meet this problem.And you can not visit this link by using a mobile phone because it can canuse a memory problem.I will solve the memory problem soon please be patient.
-
-> I tried to solve the memory problem,but I found the speed was to slow when I used HTML5 local file system to save a file.
-
