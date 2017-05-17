@@ -177,72 +177,80 @@ DoublyLinkedList.prototype.del = function(index,memory){
 	}
 	return node;
 };
+
+var finalResource = {};
+
 //监听主线程
 onmessage = function(e) {
-   	var resource = e.data;
-   	var startNo = resource.startNo;//开始帧序号
-   	var imageData = resource.imageData;
-   	var data = resource.data;
-   	var position = resource.position;
-   	var fillLength = resource.fillLength;
-   	var initImageData = resource.initImageData;
-   	var length = resource.length;
-   	var result = {//返回给主线程数据
-   		startNo:startNo,
-   		imageData:imageData
-   	};
-   	for(var i=0;i<data.length;i++){
-   		//还原
-   		var itemData = data[i];
-   		var itemPosition = position[startNo+i];
-   		var dataList = new DoublyLinkedList();
-		for(var j=0;j<itemData.length;j++){
-			dataList.push(itemData[j]);
-		}
-		//去除掉新增的所有255alpha值
-		var tempNo = 0;
-		var tempIndex = 0;
-		var tempNode = dataList.getHead();
-		while(tempIndex<fillLength[startNo+i]-1){
-			tempNo++;
-			tempIndex++;
-			tempNode = tempNode.next;
-			if(tempNo%3===0){
-				var tempNext = tempNode.next;
-				tempNode.previous.next = tempNode.next;
-				tempNode.next.previous = tempNode.previous;
-				tempNode.previous = null;
-				tempNode.next = null;
-				tempIndex++;
-				dataList.length--;
-				tempNode = tempNext;
+	var resource = e.data;
+	var action = resource.action;
+	if(action==='compute'){
+		var startNo = resource.startNo;//开始帧序号
+		var imageData = resource.imageData;
+		var data = resource.data;
+		var position = resource.position;
+		var fillLength = resource.fillLength;
+		var initImageData = resource.initImageData;
+		var length = resource.length;
+		finalResource = {//返回给主线程数据
+			startNo:startNo,
+			imageData:imageData
+		};
+		for(var i=0;i<data.length;i++){
+			//还原
+			var itemData = data[i];
+			var itemPosition = position[startNo+i];
+			var dataList = new DoublyLinkedList();
+			for(var j=0;j<itemData.length;j++){
+				dataList.push(itemData[j]);
 			}
-		}
-		for(var j=itemPosition.length-4;j>=0;j=j-2){
-			var start = itemPosition[j];
-			var space = itemPosition[j+1];
-			dataList.insert(start,new Array(space),true);
-		}
-		var node = dataList.getHead();
-		var no = 0;
-		while(node.next){
-			if(node.value&&!(node.value instanceof Array)){
-				if(initImageData.data[no]===node.value){
-					initImageData.data[no] = 0;
-				}else{
-					initImageData.data[no] = node.value;
+			//去除掉新增的所有255alpha值
+			var tempNo = 0;
+			var tempIndex = 0;
+			var tempNode = dataList.getHead();
+			while(tempIndex<fillLength[startNo+i]-1){
+				tempNo++;
+				tempIndex++;
+				tempNode = tempNode.next;
+				if(tempNo%3===0){
+					var tempNext = tempNode.next;
+					tempNode.previous.next = tempNode.next;
+					tempNode.next.previous = tempNode.previous;
+					tempNode.previous = null;
+					tempNode.next = null;
+					tempIndex++;
+					dataList.length--;
+					tempNode = tempNext;
 				}
 			}
-			if(node.value instanceof Array){
-				no+=node.value.length;
-			}else{
-				no++;
+			for(var j=itemPosition.length-4;j>=0;j=j-2){
+				var start = itemPosition[j];
+				var space = itemPosition[j+1];
+				dataList.insert(start,new Array(space),true);
 			}
-			node = node.next;
+			var node = dataList.getHead();
+			var no = 0;
+			while(node.next){
+				if(node.value&&!(node.value instanceof Array)){
+					if(initImageData.data[no]===node.value){
+						initImageData.data[no] = 0;
+					}else{
+						initImageData.data[no] = node.value;
+					}
+				}
+				if(node.value instanceof Array){
+					no+=node.value.length;
+				}else{
+					no++;
+				}
+				node = node.next;
+			}
+			for(var j=0;j<initImageData.data.length;j++){
+				imageData[i].data[j] = initImageData.data[j];
+			}
 		}
-   		for(var j=0;j<initImageData.data.length;j++){
-   			imageData[i].data[j] = initImageData.data[j];
-   		}
-   	}
-   	postMessage(result);
+		postMessage({result:'finished'});
+	}else if(action==='animate'){
+		postMessage({result:'step',data:finalResource.imageData[resource.step]});
+	}
 };
