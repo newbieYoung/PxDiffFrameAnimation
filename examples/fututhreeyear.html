@@ -28,9 +28,12 @@
 		var body = document.querySelector('body');
 		var width = 640;
 		var height = 1136;
-		var finishedNum = 0;
-		var overNum = 0;
-		var workers = {};
+		var finishedNum = 0;//整体轮回标识
+		var overs = {//结束标识
+			year:false,
+			three:false
+		};
+		var workers = {};//worker集合
 		var yearTotalImageData = [];//year动画总像素数据
 		var threeTotalImageData = [];//three动画总像素差数据
 		//year动画canvas
@@ -110,7 +113,7 @@
 						contexts[name].clearRect(0, 0, width, height);
 						contexts[name].putImageData(msg.data, 0, 0, 0, 0, width, height);
 					}else{
-						overNum++;
+						overs[name] = true;
 					}
 					startNo++;
 					finishedNum++;
@@ -126,22 +129,11 @@
 						step:startNo
 					});
 				}
-				if(overNum===2){//全部动画完成
+				if(overs['year']&&overs['three']){//全部动画完成
 					workers['year'].terminate();
 					workers['three'].terminate();
 				}
 			};
-		}
-		function animate(startNo,context,totalImageData){
-			context.clearRect(0, 0, width, height);
-			for(var i=startNo;i<totalImageData.length;i++){
-				(function(index){
-					setTimeout(function(){
-						context.clearRect(0, 0, width, height);
-						context.putImageData(totalImageData[index], 0, 0, 0, 0, width, height);
-					},(index-2)*100);
-				})(i);
-			}
 		}
 	</script>
 </body>
