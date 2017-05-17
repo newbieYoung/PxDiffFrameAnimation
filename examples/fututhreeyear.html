@@ -28,16 +28,21 @@
 		var body = document.querySelector('body');
 		var width = 640;
 		var height = 1136;
+		var finishedNum = 0;
+		var overNum = 0;
+		var workers = {};
 		var yearTotalImageData = [];//year动画总像素数据
-		var yearNum = 0;
 		var threeTotalImageData = [];//three动画总像素差数据
-		var threeNum = 0;
 		//year动画canvas
 		var yearCanvas = document.querySelector('#yearCanvas');
 		var yearContext = yearCanvas.getContext('2d');
 		//three动画canvas
 		var threeCanvas = document.querySelector('#threeCanvas');
 		var threeContext = threeCanvas.getContext('2d');
+		var contexts = {
+			year:yearContext,
+			three:threeContext
+		};
 		//图片
 		var yearImg = new Image();
 		yearImg.src = '../images/fututhreeyear/year-final.png';
@@ -84,7 +89,9 @@
 				data.push(tempContext.getImageData(0, 0, temp.width, temp.height).data);
 		   	}
 		   	var worker = new Worker('../js/fututhreeyear-compute.js');
+			workers[name] = worker;
 			var workerData = {
+				action:'compute',//计算
 				imageData:imageData,
 				startNo:startNo,
 				data:data,
@@ -95,38 +102,34 @@
 			};
 			worker.postMessage(workerData);
 			worker.onmessage = function(e){
-				if(name==='year'){
-					var startNo = e.data.startNo;
-					var imageData = e.data.imageData;
-					for(var i=0;i<imageData.length;i++){
-						yearTotalImageData[startNo+i] = imageData[i];
+				var msg = e.data;
+				if(msg.result==='finished'){
+					finishedNum++;
+				}else if(msg.result==='step'){
+					if(msg.data){
+						contexts[name].clearRect(0, 0, width, height);
+						contexts[name].putImageData(msg.data, 0, 0, 0, 0, width, height);
+					}else{
+						overNum++;
 					}
-					for(var i=0;i<yearTotalImageData.length;i++){
-						if(yearTotalImageData[i]){
-							yearNum++;
-						}
-					}
-					if(yearNum===31&&threeNum===36){
-						animate(startNo,yearContext,yearTotalImageData);
-						animate(startNo,threeContext,threeTotalImageData);
-					}
-				}else if(name==='three'){
-					var startNo = e.data.startNo;
-					var imageData = e.data.imageData;
-					for(var i=0;i<imageData.length;i++){
-						threeTotalImageData[startNo+i] = imageData[i];
-					}
-					for(var i=0;i<threeTotalImageData.length;i++){
-						if(threeTotalImageData[i]){
-							threeNum++;
-						}
-					}
-					if(yearNum===31&&threeNum===36){
-						animate(startNo,threeContext,threeTotalImageData);
-						animate(startNo,yearContext,yearTotalImageData);
-					}
+					startNo++;
+					finishedNum++;
 				}
-				this.terminate();
+				if(finishedNum===2){//全部数据计算完成
+					finishedNum = 0;
+					workers['year'].postMessage({
+						action:'animate',
+						step:startNo
+					});
+					workers['three'].postMessage({
+						action:'animate',
+						step:startNo
+					});
+				}
+				if(overNum===2){//全部动画完成
+					workers['year'].terminate();
+					workers['three'].terminate();
+				}
 			};
 		}
 		function animate(startNo,context,totalImageData){
