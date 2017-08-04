@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>导入数据图片</title>
+</head>
+<body>
+    <script>
+        window.onload = function () {
+            var source = './data/fututhreeyear-data.png';
+            var img = document.createElement('img');
+            img.onload = function(){
+                var canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                var context = canvas.getContext("2d");
+                context.drawImage(img, 0, 0);
+                var imageData = context.getImageData(0, 0, canvas.width, canvas.height),
+                        pixels = imageData.data;
+
+                var script = document.createElement('script');
+                var buffer = [];
+                for (var i = 0, l = pixels.length; i < l; i++) {
+                    if (i % 4 == 3) continue; // alpha会影响png还原
+                    if (!pixels[i]) break;
+                    buffer.push(String.fromCharCode(pixels[i]));
+                }
+                script.src = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(buffer.join(''));
+                document.body.appendChild(script);
+                script.onload = function(){
+                    //输出数据看看是否一致
+                    //console.log(yearPosition);
+                    //console.log(yearDiffHeight);
+                    console.log(yearFillLength);
+                }
+                img = null;
+            }
+            img.src = source;
+        }
+    </script>
+</body>
+</html>

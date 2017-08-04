@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>导出数据图片</title>
+</head>
+<body>
+    <script src="./js/fututhreeyear-data.js"></script>
+    <script>
+        window.onload = function(){
+            var yearPositionText = 'var yearPosition = '+JSON.stringify(yearPosition);
+            var yearDiffHeightText = 'var yearDiffHeight = '+JSON.stringify(yearDiffHeight);
+            var yearFillLengthText = 'var yearFillLength = '+JSON.stringify(yearFillLength);
+
+            var text = yearPositionText+';'+yearDiffHeightText+';'+yearFillLengthText;
+
+            //以下逻辑固定
+            var pixel = Math.ceil((text.length + 2) / 3); // 1一个像素存3个字节,
+            var size = Math.ceil(Math.sqrt(pixel));
+            var canvas = document.createElement('canvas');
+            canvas.width = canvas.height = size;
+            var context = canvas.getContext("2d"),
+                    imageData = context.getImageData(0, 0, canvas.width, canvas.height),
+                    pixels = imageData.data;
+            for(var i = 0, j = 0, l = pixels.length; i < l; i++){
+                if (i % 4 == 3) { // alpha会影响png还原
+                    pixels[i] = 255;
+                    continue;
+                }
+                var code = text.charCodeAt(j++);
+                if (isNaN(code)) break;
+                pixels[i] = code;
+            }
+            context.putImageData(imageData, 0, 0);
+
+            document.querySelector('body').appendChild(canvas);
+        }
+    </script>
+</body>
+</html>
