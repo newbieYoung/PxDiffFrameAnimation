@@ -8,13 +8,13 @@
     <script src="./js/fututhreeyear-data.js"></script>
     <script>
         window.onload = function(){
-            var yearPositionText = 'var yearPosition = '+JSON.stringify(yearPosition);
-            var yearDiffHeightText = 'var yearDiffHeight = '+JSON.stringify(yearDiffHeight);
-            var yearFillLengthText = 'var yearFillLength = '+JSON.stringify(yearFillLength);
+            var positionText = 'var yearPosition = '+JSON.stringify(yearPosition);
+            var diffHeightText = 'var yearDiffHeight = '+JSON.stringify(yearDiffHeight);
+            var fillLengthText = 'var yearFillLength = '+JSON.stringify(yearFillLength);
 
-            var text = yearPositionText+';'+yearDiffHeightText+';'+yearFillLengthText;
+            var text = positionText+';'+diffHeightText+';'+fillLengthText+';';
 
-            //以下逻辑固定
+            //导出逻辑
             var pixel = Math.ceil((text.length + 2) / 3); // 1一个像素存3个字节,
             var size = Math.ceil(Math.sqrt(pixel));
             var canvas = document.createElement('canvas');

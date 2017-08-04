@@ -3,7 +3,6 @@
 <head>
 	<meta charset="UTF-8">
 	<title>富途三周年动画</title>
-	<script type="text/javascript" src="../js/fututhreeyear-data.js"></script>
 	<style type="text/css">
 	body{
 		background-color:rgb(222,222,222);
@@ -24,120 +23,163 @@
 	<canvas id="yearCanvas" width="640" height="1136"></canvas>
 	<canvas id="threeCanvas" width="640" height="1136"></canvas>
 	<script type="text/javascript">
-		//常量
-		var body = document.querySelector('body');
-		var width = 640;
-		var height = 1136;
-		var yearTotalImageData = [];//year动画总像素数据
-		var yearNum = 0;
-		var threeTotalImageData = [];//three动画总像素差数据
-		var threeNum = 0;
-		//year动画canvas
-		var yearCanvas = document.querySelector('#yearCanvas');
-		var yearContext = yearCanvas.getContext('2d');
-		//three动画canvas
-		var threeCanvas = document.querySelector('#threeCanvas');
-		var threeContext = threeCanvas.getContext('2d');
-		//图片
-		var yearImg = new Image();
-		yearImg.src = '../images/fututhreeyear/year-final.png';
-		yearImg.onload = function(){
-			var initImageData = yearContext.getImageData(0, 0, width, height);
-			getFrame('year',2,initImageData,yearImg,0,yearPosition,yearDiffHeight,yearFillLength,31);
-		};
-		var threeImg = new Image();
-		threeImg.src = '../images/fututhreeyear/three-final.png';
-		threeImg.onload = function(){
-			var initImageData = threeContext.getImageData(0, 0, width, height);
-			getFrame('three',2,initImageData,threeImg,0,threePosition,threeDiffHeight,threeFillLength,36);
-		};
-		/**
-		 * 还原帧像素数据
-		 * @param  {[type]} name          [动画名称]
-		 * @param  {[type]} startNo       [还原帧中第一帧序号]
-		 * @param  {[type]} initImageData [启始帧像素数据]
-		 * @param  {[type]} img           [原图]
-		 * @param  {[type]} lheight       [原图启始纵坐标（合并精灵图是纵向排列的）]
-		 * @param  {[type]} position      [还原帧位置差数据]
-		 * @param  {[type]} diffHeight    [像素差图片的高度]
-		 * @param  {[type]} fillLength    [填充255alpha值后的像素差数据长度]
-		 * @param  {[type]} length        [还原帧数量]
-		 */
-		function getFrame(name,startNo,initImageData,img,lheight,position,diffHeight,fillLength,length){
-			var imageData = [];//用于存储还原之后的像素差
-			var data = [];
-		 	for(var i=0;i<length;i++){
-		 		var init = document.createElement('canvas');
-		 		init.width = width;
-		 		init.height = height;
-		 		var initContext = init.getContext('2d');
-		 		imageData.push(initContext.getImageData(0, 0, width, height));
-		 		var no = startNo+i;
-		   		var temp = document.createElement('canvas');
-				temp.width = width;
-				temp.height = diffHeight[no];
-				var tempContext = temp.getContext('2d');
-				if(diffHeight[no-1]){
-					lheight += diffHeight[no-1];
+		var dataTag = 0;
+
+		function data(source) {
+			var img = document.createElement('img');
+			img.onload = function () {
+				var canvas = document.createElement('canvas');
+				canvas.width = img.width;
+				canvas.height = img.height;
+
+				var context = canvas.getContext("2d");
+				context.drawImage(img, 0, 0);
+				var imageData = context.getImageData(0, 0, canvas.width, canvas.height),
+						pixels = imageData.data;
+
+				var script = document.createElement('script');
+				var buffer = [];
+				for (var i = 0, l = pixels.length; i < l; i++) {
+					if (i % 4 == 3) continue; // alpha会影响png还原
+					if (!pixels[i]) break;
+					buffer.push(String.fromCharCode(pixels[i]));
 				}
-				tempContext.drawImage(img,0,lheight,width,diffHeight[no],0,0,width,diffHeight[no]);
-				data.push(tempContext.getImageData(0, 0, temp.width, temp.height).data);
-		   	}
-		   	var worker = new Worker('../js/fututhreeyear-compute.js');
-			var workerData = {
-				imageData:imageData,
-				startNo:startNo,
-				data:data,
-				position:position,
-				fillLength:fillLength,
-				length:length,
-				initImageData:initImageData
-			};
-			worker.postMessage(workerData);
-			worker.onmessage = function(e){
-				if(name==='year'){
-					var startNo = e.data.startNo;
-					var imageData = e.data.imageData;
-					for(var i=0;i<imageData.length;i++){
-						yearTotalImageData[startNo+i] = imageData[i];
-					}
-					for(var i=0;i<yearTotalImageData.length;i++){
-						if(yearTotalImageData[i]){
-							yearNum++;
-						}
-					}
-					if(yearNum===31&&threeNum===36){
-						animate(startNo,yearContext,yearTotalImageData);
-						animate(startNo,threeContext,threeTotalImageData);
-					}
-				}else if(name==='three'){
-					var startNo = e.data.startNo;
-					var imageData = e.data.imageData;
-					for(var i=0;i<imageData.length;i++){
-						threeTotalImageData[startNo+i] = imageData[i];
-					}
-					for(var i=0;i<threeTotalImageData.length;i++){
-						if(threeTotalImageData[i]){
-							threeNum++;
-						}
-					}
-					if(yearNum===31&&threeNum===36){
-						animate(startNo,threeContext,threeTotalImageData);
-						animate(startNo,yearContext,yearTotalImageData);
+				script.src = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(buffer.join(''));
+				document.body.appendChild(script);
+				script.onload = function () {
+					//输出数据看看是否一致
+					//console.log(yearPosition);
+					//console.log(yearDiffHeight);
+					//console.log(yearFillLength);
+					dataTag++;
+					if(dataTag==2){
+						animation();
 					}
 				}
-				this.terminate();
-			};
+				img = null;
+			}
+			img.src = source;
 		}
-		function animate(startNo,context,totalImageData){
-			context.clearRect(0, 0, width, height);
-			for(var i=startNo;i<totalImageData.length;i++){
-				(function(index){
-					setTimeout(function(){
-						context.clearRect(0, 0, width, height);
-						context.putImageData(totalImageData[index], 0, 0, 0, 0, width, height);
-					},(index-2)*100);
-				})(i);
+
+		data('../data/fututhreeyear-data-three.png');
+		data('../data/fututhreeyear-data-year.png');
+
+		function animation(){
+			//常量
+			var body = document.querySelector('body');
+			var width = 640;
+			var height = 1136;
+			var yearTotalImageData = [];//year动画总像素数据
+			var yearNum = 0;
+			var threeTotalImageData = [];//three动画总像素差数据
+			var threeNum = 0;
+			//year动画canvas
+			var yearCanvas = document.querySelector('#yearCanvas');
+			var yearContext = yearCanvas.getContext('2d');
+			//three动画canvas
+			var threeCanvas = document.querySelector('#threeCanvas');
+			var threeContext = threeCanvas.getContext('2d');
+			//图片
+			var yearImg = new Image();
+			yearImg.src = '../images/fututhreeyear/year-final.png';
+			yearImg.onload = function(){
+				var initImageData = yearContext.getImageData(0, 0, width, height);
+				getFrame('year',2,initImageData,yearImg,0,yearPosition,yearDiffHeight,yearFillLength,31);
+			};
+			var threeImg = new Image();
+			threeImg.src = '../images/fututhreeyear/three-final.png';
+			threeImg.onload = function(){
+				var initImageData = threeContext.getImageData(0, 0, width, height);
+				getFrame('three',2,initImageData,threeImg,0,threePosition,threeDiffHeight,threeFillLength,36);
+			};
+			/**
+			 * 还原帧像素数据
+			 * @param  {[type]} name          [动画名称]
+			 * @param  {[type]} startNo       [还原帧中第一帧序号]
+			 * @param  {[type]} initImageData [启始帧像素数据]
+			 * @param  {[type]} img           [原图]
+			 * @param  {[type]} lheight       [原图启始纵坐标（合并精灵图是纵向排列的）]
+			 * @param  {[type]} position      [还原帧位置差数据]
+			 * @param  {[type]} diffHeight    [像素差图片的高度]
+			 * @param  {[type]} fillLength    [填充255alpha值后的像素差数据长度]
+			 * @param  {[type]} length        [还原帧数量]
+			 */
+			function getFrame(name,startNo,initImageData,img,lheight,position,diffHeight,fillLength,length){
+				var imageData = [];//用于存储还原之后的像素差
+				var data = [];
+				for(var i=0;i<length;i++){
+					var init = document.createElement('canvas');
+					init.width = width;
+					init.height = height;
+					var initContext = init.getContext('2d');
+					imageData.push(initContext.getImageData(0, 0, width, height));
+					var no = startNo+i;
+					var temp = document.createElement('canvas');
+					temp.width = width;
+					temp.height = diffHeight[no];
+					var tempContext = temp.getContext('2d');
+					if(diffHeight[no-1]){
+						lheight += diffHeight[no-1];
+					}
+					tempContext.drawImage(img,0,lheight,width,diffHeight[no],0,0,width,diffHeight[no]);
+					data.push(tempContext.getImageData(0, 0, temp.width, temp.height).data);
+				}
+				var worker = new Worker('../js/fututhreeyear-compute.js');
+				var workerData = {
+					imageData:imageData,
+					startNo:startNo,
+					data:data,
+					position:position,
+					fillLength:fillLength,
+					length:length,
+					initImageData:initImageData
+				};
+				worker.postMessage(workerData);
+				worker.onmessage = function(e){
+					if(name==='year'){
+						var startNo = e.data.startNo;
+						var imageData = e.data.imageData;
+						for(var i=0;i<imageData.length;i++){
+							yearTotalImageData[startNo+i] = imageData[i];
+						}
+						for(var i=0;i<yearTotalImageData.length;i++){
+							if(yearTotalImageData[i]){
+								yearNum++;
+							}
+						}
+						if(yearNum===31&&threeNum===36){
+							animate(startNo,yearContext,yearTotalImageData);
+							animate(startNo,threeContext,threeTotalImageData);
+						}
+					}else if(name==='three'){
+						var startNo = e.data.startNo;
+						var imageData = e.data.imageData;
+						for(var i=0;i<imageData.length;i++){
+							threeTotalImageData[startNo+i] = imageData[i];
+						}
+						for(var i=0;i<threeTotalImageData.length;i++){
+							if(threeTotalImageData[i]){
+								threeNum++;
+							}
+						}
+						if(yearNum===31&&threeNum===36){
+							animate(startNo,threeContext,threeTotalImageData);
+							animate(startNo,yearContext,yearTotalImageData);
+						}
+					}
+					this.terminate();
+				};
+			}
+			function animate(startNo,context,totalImageData){
+				context.clearRect(0, 0, width, height);
+				for(var i=startNo;i<totalImageData.length;i++){
+					(function(index){
+						setTimeout(function(){
+							context.clearRect(0, 0, width, height);
+							context.putImageData(totalImageData[index], 0, 0, 0, 0, width, height);
+						},(index-2)*100);
+					})(i);
+				}
 			}
 		}
 	</script>
